@@ -1,0 +1,23 @@
+language: generic
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t alirepo/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true alirepo/react-test npm test
+
+after_success:
+  - docker build -t alirepo/multi-client ./client
+  - docker build -t alirepo/multi-nginx ./nginx
+  - docker build -t alirepo/multi-server ./server
+  - docker build -t alirepo/multi-worker ./worker
+  #Log in to the docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  #Take those images and push them to docker hub
+  - docker push alirepo/multi-client
+  - docker push alirepo/multi-nginx
+  - docker push alirepo/multi-server
+  - docker push alirepo/multi-worker
